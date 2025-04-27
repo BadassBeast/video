@@ -1,5 +1,4 @@
 opencv-python
 requests
-json
 base64
 os
