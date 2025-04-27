@@ -1,57 +1,58 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
 import cv2
-import base64
 import requests
-import json
-import os
+import pybase64
+import numpy as np
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
-class VideoRequest(BaseModel):
-    video_path: str
-    frame_no: int
-    clickbait_choice: str
+# Route for testing if the app is live
+@app.get("/")
+def read_root():
+    return {"message": "Hello, World!"}
 
-@app.post("/generate")
-async def generate(request: VideoRequest):
-    video_path = request.video_path
-    frame_no = request.frame_no
-    clickbait_choice = request.clickbait_choice
+# Example route with a dynamic parameter
+@app.get("/item/{item_id}")
+def read_item(item_id: int):
+    return {"item_id": item_id}
 
-    if not os.path.exists(video_path):
-        return {"error": "File not found"}
+# Example route that uses OpenCV (you can replace this with actual functionality)
+@app.get("/opencv-example")
+def opencv_example():
+    # OpenCV functionality as an example (could be an image processing task)
+    image = np.zeros((512, 512, 3), np.uint8)
+    image = cv2.putText(image, 'OpenCV Example', (10, 250), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    
+    # Save image to disk for demonstration purposes
+    cv2.imwrite('opencv_example.png', image)
+    
+    return JSONResponse(content={"message": "OpenCV image generated."})
 
-    cap = cv2.VideoCapture(video_path)
-    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_no)
-    ret, frame = cap.read()
-    cap.release()
-    if not ret:
-        return {"error": f"Cannot read frame {frame_no}"}
+# Example route using requests to fetch data from a URL
+@app.get("/fetch-data")
+def fetch_data():
+    url = "https://jsonplaceholder.typicode.com/todos/1"
+    response = requests.get(url)
+    return response.json()
 
-    _, buf = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 75])
-    b64 = base64.b64encode(buf).decode()
-    data_url = f"data:image/jpeg;base64,{b64}"
+# Example route using pybase64 for encoding data
+@app.get("/encode-base64")
+def encode_base64():
+    sample_data = "This is a test string."
+    encoded_data = pybase64.b64encode(sample_data.encode("utf-8")).decode("utf-8")
+    return {"encoded_data": encoded_data}
 
-    title_prompt = "Generate a catchy, engaging YouTube title..."  # adjust this based on clickbait_choice
+# Example route with query parameters
+@app.get("/query")
+def read_query(name: str = None, age: int = None):
+    return {"name": name, "age": age}
 
-    title_payload = {
-        "model": "qwen/qwen2.5-vl-72b-instruct:free",
-        "messages": [{"role": "user", "content": [{"type": "text", "text": title_prompt}, {"type": "image_url", "image_url": {"url": data_url}}]}]
-    }
-
-    headers = {
-        "Authorization": "Bearer YOUR_API_KEY",
-        "Content-Type": "application/json"
-    }
-
-    tresp = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=title_payload)
-    if tresp.status_code >= 400:
-        return {"error": tresp.json()}
-    title_json = tresp.json()
-
-    title = title_json["choices"][0]["message"]["content"].strip()
-
-    # Similar for description generation
-
-    return {"title": title, "description": description}
+# Example of error handling with FastAPI
+@app.get("/error-example")
+def error_example():
+    try:
+        # Trigger an error for demonstration
+        1 / 0
+    except ZeroDivisionError as e:
+        return JSONResponse(status_code=500, content={"error": "A server error occurred", "details": str(e)})
