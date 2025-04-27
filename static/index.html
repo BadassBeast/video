@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Generate YouTube Title & Description</title>
+</head>
+<body style="font-family:sans-serif; margin:50px;">
+  <h1>Upload Video to Generate</h1>
+  <form action="/generate" method="post" enctype="multipart/form-data">
+    <label>Choose Video File:</label><br>
+    <input type="file" name="video" accept="video/*" required><br><br>
+
+    <label>Frame Number to Extract:</label><br>
+    <input type="number" name="frame_no" value="100" required><br><br>
+
+    <label>Clickbait Title?</label><br>
+    <select name="clickbait">
+      <option value="true">Yes</option>
+      <option value="false">No</option>
+    </select><br><br>
+
+    <button type="submit">Generate</button>
+  </form>
+</body>
+</html>
