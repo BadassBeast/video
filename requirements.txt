@@ -4,3 +4,4 @@ pybase64
 fastapi
 gunicorn
 uvicorn
+python-multipart
