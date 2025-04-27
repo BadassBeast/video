@@ -1,4 +1,4 @@
 opencv-python
 requests
-base64
+pybase64
 os
